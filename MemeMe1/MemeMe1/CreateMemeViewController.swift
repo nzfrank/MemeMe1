@@ -73,7 +73,7 @@ class CreateMemeViewController: UIViewController, UINavigationControllerDelegate
     
     // MARK: TextField style settings
     let memeTextAttributes: [NSAttributedString.Key: Any] = [
-        .strokeColor: UIColor.white,
+        .strokeColor: UIColor.black,
         .foregroundColor: UIColor.white,
         .font: UIFont(name: "HelveticaNeue-CondensedBlack", size: 40)!,
         .strokeWidth: -4.0
