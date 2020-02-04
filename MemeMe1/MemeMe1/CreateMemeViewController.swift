@@ -14,8 +14,9 @@ extension Notification.Name {
     public static var RelocateTextfield = Notification.Name.init("RelocateTextfield")
 }
 
-class ViewController: UIViewController, UINavigationControllerDelegate {
+class CreateMemeViewController: UIViewController, UINavigationControllerDelegate {
 
+    // MARK: - Items initialization
     // MARK: TopToolBarItems
     private var topToolBar = UIToolbar()
     let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: self, action: nil)
@@ -74,13 +75,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
     
     private var keyboardHeight: CGFloat = 0
     
+    // MARK: TextField style settings
     let memeTextAttributes: [NSAttributedString.Key: Any] = [
-        NSAttributedString.Key.strokeColor: UIColor.white,
-        NSAttributedString.Key.foregroundColor: UIColor.white,
-        NSAttributedString.Key.font: UIFont(name: "HelveticaNeue-CondensedBlack", size: 40)!,
-        NSAttributedString.Key.strokeWidth: -5
+        .strokeColor: UIColor.white,
+        .foregroundColor: UIColor.white,
+        .font: UIFont(name: "HelveticaNeue-CondensedBlack", size: 40)!,
+        .strokeWidth: -4.0
     ]
     
+    // MARK: View Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         setTextField(topTextField, topTextFieldPlaceHolder)
@@ -118,11 +121,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
             make.top.left.right.bottom.equalTo(imageView)
         }
         
-        showToolbars(shouldShow: true)
+        showToolBars(shouldShow: true)
+        cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
     }
 
     override func viewWillAppear(_ animated: Bool) {
-        cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
         super.viewWillAppear(animated)
         subscribeToKeyboardNotifications()
         subscribeToTextfieldNotifications()
@@ -141,6 +144,35 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
         toolBar.backgroundColor = .darkGray
     }
     
+    private func setTextField(_ textField: UITextField, _ defaultText: String) {
+        textField.text = defaultText
+        textField.defaultTextAttributes = memeTextAttributes
+        textField.textAlignment = .center
+        textField.delegate = self
+        textField.autocapitalizationType = .allCharacters
+        textField.borderStyle = .none
+    }
+    
+    func showToolbars(shouldShow: Boolean) {
+      self.topToolbar.isHidden = shouldShow
+      self.bottomToolbar.isHidden = shouldShow
+      shouldShow ? topToolBarHeightConstrain?.deactivate() : topToolBarHeightConstrain?.activate()
+      shouldShow ? bottomToolbarHeightConstraint?.deactivate() : bottomToolbarHeightConstraint?.activate()
+    }
+    
+    func updateShareButton() {
+        shareButton.isEnabled = imageView.image == nil
+    }
+    
+    @objc func cancelEdit() {
+        /// Reset everything
+        imageView.image = nil
+        topTextField.text = topTextFieldPlaceHolder
+        bottomTextField.text = bottomTextFieldPlaceHolder
+        updateShareButton()
+    }
+    
+    // MARK: - Notification Observers
     func subscribeToTextfieldNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(relocateTextfield), name: .RelocateTextfield, object: nil)
     }
@@ -156,6 +188,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
         NotificationCenter.default.removeObserver(self)
     }
     
+    // MARK: - Keyboard Methods
     @objc func keyboardWillShow(_ notification:Notification) {
         self.keyboardHeight = getKeyboardHeight(notification)
     }
@@ -177,16 +210,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
         return keyboardSize.cgRectValue.height
     }
 
-    private func setTextField(_ textField: UITextField, _ defaultText: String) {
-        textField.text = defaultText
-        textField.defaultTextAttributes = memeTextAttributes
-        textField.textAlignment = .center
-        textField.delegate = self
-        textField.autocapitalizationType = .allCharacters
-        textField.borderStyle = .none
-        textField.adjustsFontSizeToFitWidth = true
-    }
-    
+    // MARK: - Image Picking
     @objc func pickAnImageFromAlbum(_ sender: Any) {
         presentImagePickerWith(sourceType: .photoLibrary)
     }
@@ -195,17 +219,18 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
         presentImagePickerWith(sourceType: .camera)
     }
     
-    private func presentImagePickerWith(sourceType: UIImagePickerController.SourceType) {
+    private func presentImagePickerWith(sourceType: UIImagePickerControllerSourceType) {
         let pickerController = UIImagePickerController()
         pickerController.delegate = self
         pickerController.sourceType = sourceType
         present(pickerController, animated: true, completion: nil)
     }
     
+    // MARK: - Meme Methods
     func generateMemedImage() -> UIImage {
 
         // Hide toolbars
-        showToolbars(shouldShow: false)
+        showToolBars(shouldShow: false)
 
         // Render view to an image
         UIGraphicsBeginImageContext(self.view.frame.size)
@@ -214,16 +239,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
         UIGraphicsEndImageContext()
 
         // Show toolbars
-        showToolbars(shouldShow: true)
+        showToolBars(shouldShow: true)
 
         return memedImage
-    }
-    
-    func showToolbars(shouldShow: Bool) {
-        topToolBar.isHidden = shouldShow == false
-        bottomToolBar.isHidden = shouldShow == false
-        shouldShow ? topToolBarHeightConstraint?.deactivate() : topToolBarHeightConstraint?.activate()
-        shouldShow ? bottomToolBarHeightConstraint?.deactivate() : bottomToolBarHeightConstraint?.activate()
     }
     
     func save(_ memedImage: UIImage) {
@@ -243,21 +261,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
         }
         present(v, animated: true)
     }
-    
-    func updateShareButton() {
-        shareButton.isEnabled = imageView.image == nil
-    }
-    
-    @objc func cancelEdit() {
-        /// Reset everything
-        imageView.image = nil
-        topTextField.text = topTextFieldPlaceHolder
-        bottomTextField.text = bottomTextFieldPlaceHolder
-        updateShareButton()
-    }
 }
 
-extension ViewController: UITextFieldDelegate {
+extension CreateMemeViewController: UITextFieldDelegate {
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
         if textField.text == topTextFieldPlaceHolder || textField.text == bottomTextFieldPlaceHolder {
@@ -280,7 +286,7 @@ extension ViewController: UITextFieldDelegate {
     }
 }
 
-extension ViewController: UIImagePickerControllerDelegate {
+extension CreateMemeViewController: UIImagePickerControllerDelegate {
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         if let image = info[.originalImage] as? UIImage {
