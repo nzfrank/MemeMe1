@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  CreateMemeViewController.swift
 //  MemeMe1
 //
 //  Created by Frank Feng on 22/01/20.
@@ -10,12 +10,8 @@ import Foundation
 import UIKit
 import SnapKit
 
-extension Notification.Name {
-    public static var RelocateTextfield = Notification.Name.init("RelocateTextfield")
-}
-
 class CreateMemeViewController: UIViewController, UINavigationControllerDelegate {
-
+    
     // MARK: - Items initialization
     // MARK: TopToolBarItems
     private var topToolBar = UIToolbar()
@@ -57,12 +53,12 @@ class CreateMemeViewController: UIViewController, UINavigationControllerDelegate
         return i
     }()
     private lazy var textStackView: UIStackView = {
-      let stack = UIStackView(frame: .zero)
-      stack.alignment = .center
+        let stack = UIStackView(frame: .zero)
+        stack.alignment = .center
         stack.axis = .vertical
-      stack.spacing = 5
-      stack.distribution = .equalSpacing
-      return stack
+        stack.spacing = 5
+        stack.distribution = .equalSpacing
+        return stack
     }()
     private var topTextField = UITextField()
     private var bottomTextField = UITextField()
@@ -121,18 +117,17 @@ class CreateMemeViewController: UIViewController, UINavigationControllerDelegate
             make.top.left.right.bottom.equalTo(imageView)
         }
         
-        showToolBars(shouldShow: true)
+        showToolbars(shouldShow: true)
         cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         subscribeToKeyboardNotifications()
-        subscribeToTextfieldNotifications()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
-
+        
         super.viewWillDisappear(animated)
         unsubscribeFromAllNotifications()
     }
@@ -153,11 +148,11 @@ class CreateMemeViewController: UIViewController, UINavigationControllerDelegate
         textField.borderStyle = .none
     }
     
-    func showToolbars(shouldShow: Boolean) {
-      self.topToolbar.isHidden = shouldShow
-      self.bottomToolbar.isHidden = shouldShow
-      shouldShow ? topToolBarHeightConstrain?.deactivate() : topToolBarHeightConstrain?.activate()
-      shouldShow ? bottomToolbarHeightConstraint?.deactivate() : bottomToolbarHeightConstraint?.activate()
+    func showToolbars(shouldShow: Bool) {
+        topToolBar.isHidden = shouldShow == false
+        bottomToolBar.isHidden = shouldShow == false
+        shouldShow ? topToolBarHeightConstraint?.deactivate() : topToolBarHeightConstraint?.activate()
+        shouldShow ? bottomToolBarHeightConstraint?.deactivate() : bottomToolBarHeightConstraint?.activate()
     }
     
     func updateShareButton() {
@@ -173,16 +168,12 @@ class CreateMemeViewController: UIViewController, UINavigationControllerDelegate
     }
     
     // MARK: - Notification Observers
-    func subscribeToTextfieldNotifications() {
-        NotificationCenter.default.addObserver(self, selector: #selector(relocateTextfield), name: .RelocateTextfield, object: nil)
-    }
-    
     func subscribeToKeyboardNotifications() {
-
+        
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
-
+    
     func unsubscribeFromAllNotifications() {
         /// Remove all the observers
         NotificationCenter.default.removeObserver(self)
@@ -190,26 +181,22 @@ class CreateMemeViewController: UIViewController, UINavigationControllerDelegate
     
     // MARK: - Keyboard Methods
     @objc func keyboardWillShow(_ notification:Notification) {
-        self.keyboardHeight = getKeyboardHeight(notification)
-    }
-    
-    @objc func relocateTextfield() {
-        if view.frame.origin.y >= 0 {
-            view.frame.origin.y -= self.keyboardHeight
+        if bottomTextField.isFirstResponder {
+            view.frame.origin.y = -getKeyboardHeight(notification)
         }
     }
     
     @objc func keyboardWillHide(_ notification:Notification) {
         view.frame.origin.y = 0
     }
-
+    
     func getKeyboardHeight(_ notification:Notification) -> CGFloat {
-
+        
         let userInfo = notification.userInfo
         let keyboardSize = userInfo![UIResponder.keyboardFrameEndUserInfoKey] as! NSValue // of CGRect
         return keyboardSize.cgRectValue.height
     }
-
+    
     // MARK: - Image Picking
     @objc func pickAnImageFromAlbum(_ sender: Any) {
         presentImagePickerWith(sourceType: .photoLibrary)
@@ -219,7 +206,7 @@ class CreateMemeViewController: UIViewController, UINavigationControllerDelegate
         presentImagePickerWith(sourceType: .camera)
     }
     
-    private func presentImagePickerWith(sourceType: UIImagePickerControllerSourceType) {
+    private func presentImagePickerWith(sourceType: UIImagePickerController.SourceType) {
         let pickerController = UIImagePickerController()
         pickerController.delegate = self
         pickerController.sourceType = sourceType
@@ -228,19 +215,19 @@ class CreateMemeViewController: UIViewController, UINavigationControllerDelegate
     
     // MARK: - Meme Methods
     func generateMemedImage() -> UIImage {
-
+        
         // Hide toolbars
-        showToolBars(shouldShow: false)
-
+        showToolbars(shouldShow: false)
+        
         // Render view to an image
         UIGraphicsBeginImageContext(self.view.frame.size)
         view.drawHierarchy(in: self.view.frame, afterScreenUpdates: true)
         let memedImage:UIImage = UIGraphicsGetImageFromCurrentImageContext()!
         UIGraphicsEndImageContext()
-
+        
         // Show toolbars
-        showToolBars(shouldShow: true)
-
+        showToolbars(shouldShow: true)
+        
         return memedImage
     }
     
@@ -268,9 +255,6 @@ extension CreateMemeViewController: UITextFieldDelegate {
     func textFieldDidBeginEditing(_ textField: UITextField) {
         if textField.text == topTextFieldPlaceHolder || textField.text == bottomTextFieldPlaceHolder {
             textField.text = ""
-        }
-        if textField == bottomTextField {
-            NotificationCenter.default.post(.init(name: .RelocateTextfield))
         }
     }
     
